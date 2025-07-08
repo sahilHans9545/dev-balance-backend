@@ -6,9 +6,9 @@ import jwt from "jsonwebtoken";
 // TODO : finish the signup controller
 export default async (req, res) => {
   // Steps :
-  // 1) validate the body (DONE)
-  // 2) check if the user does not exist (if exist throw the error)
-  // 3) create a jwt token for the user
+  // 1) validate the body ---- done
+  // 2) check if the user does not exist (if exist throw the error) ---- done
+  // 3) create a jwt token for the user ---- done
   // 4) send a verify link to the user
   // 5) now if the user will open the link and if that url is valid we will add an entry to the users table
   // 6) then will add the token as a cookie to the browser so whenever user will send request to our server jwt token will come
@@ -21,7 +21,7 @@ export default async (req, res) => {
     // checking if user is already present with the given email
     const user = await prisma.user.findUnique({
       where: {
-        email: user.email,
+        email: userData.email,
       },
     });
 
