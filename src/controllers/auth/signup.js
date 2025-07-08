@@ -2,17 +2,25 @@ import { ValidationError } from "yup";
 import prisma from "../../config/prisma.js";
 import { userSchema } from "../../validation/userSchema.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import sendMail from "../../helpers/sendMail.js";
 
-// TODO : finish the signup controller
+/**
+ * @function signup
+ * @description Handles user signup by validating data, checking for existing users, hashing password,
+ *              generating a verification token, and sending a verification email.
+ *
+ * @path : /api/auth/signup
+ * @example
+ * Resquest body Example :
+ * req.body = {
+ *   name: "John Doe",
+ *   email: "john@example.com",
+ *   password: "securepassword123"
+ * }
+ *
+ */
 export default async (req, res) => {
-  // Steps :
-  // 1) validate the body ---- done
-  // 2) check if the user does not exist (if exist throw the error) ---- done
-  // 3) create a jwt token for the user ---- done
-  // 4) send a verify link to the user
-  // 5) now if the user will open the link and if that url is valid we will add an entry to the users table
-  // 6) then will add the token as a cookie to the browser so whenever user will send request to our server jwt token will come
-
   try {
     const userData = req.body;
     // validating the user Object
@@ -31,6 +39,9 @@ export default async (req, res) => {
         .json({ message: "User already exists with this email." });
     }
 
+    // hashing the user password using bcrypt
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
     // creating a jwt token to generate a verification link
     const token = jwt.sign(
       { name: userData.name, email: userData.email, password: hashedPassword },
@@ -41,9 +52,14 @@ export default async (req, res) => {
     );
 
     const verifyLink = `${process.env.FRONTEND_DOMAIN}verify-email?token=${token}`;
-    console.log("verification LINK : ", verifyLink);
 
-    //TODO : send the above verifyLink to the user mail
+    // TODO : Improve the html body.
+    await sendMail(
+      userData.email,
+      "Verify Your Email",
+      `<h3>Click below to verify your email:</h3>
+             <a href="${verifyLink}">Verify Email</a>`
+    );
     res.status(200).json({
       message:
         "Signup successful! Please check your email to verify your account.",
@@ -55,7 +71,7 @@ export default async (req, res) => {
         errors: error.errors,
       });
     } else {
-      console.log("ERROR : ", error);
+      console.log("Error while signing up : ", error);
       res.status(500).json({ message: "Internal server error" });
     }
   }
